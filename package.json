@@ -1,0 +1,12 @@
+{
+  "name": "quiz-battle-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "cd server && npm install && cd ../client && npm install",
+    "dev": "npx concurrently \"cd server && npm run dev\" \"cd client && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

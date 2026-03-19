@@ -1,0 +1,56 @@
+========================================
+HOW TO SET YOUR IMAGES AS THEMES
+========================================
+
+EXACT PATH (Windows)
+--------------------
+Put all theme images inside this folder:
+
+  c:\Users\KIIT0001\OneDrive\Desktop\mini project\client\public\themes
+
+If "public" or "themes" does not exist, create it (see steps below).
+
+
+STEP-BY-STEP
+------------
+
+Step 1: Open the project folder
+  • Open File Explorer.
+  • Go to:  c:\Users\KIIT0001\OneDrive\Desktop\mini project\client
+
+Step 2: Create "public" folder (if it doesn't exist)
+  • Inside "client", right-click → New → Folder.
+  • Name it exactly:  public
+
+Step 3: Create "themes" folder
+  • Open the "public" folder.
+  • Right-click → New → Folder.
+  • Name it exactly:  themes
+
+Step 4: Copy your 5 images into the "themes" folder
+  • Copy the 5 theme images you want (from your PC or downloads).
+  • Paste them into:  client\public\themes
+
+Step 5: Rename each image exactly as below
+  • Image 1 (space/alien landscape):     space-desert.jpg
+  • Image 2 (red sports car):           race-car.jpg
+  • Image 3 (astronaut with flag):      astro-kid.jpg
+  • Image 4 (red neon corridor):        sci-fi-corridor.jpg
+  • Image 5 (astronaut on cliffs):      hero-astronaut.jpg
+
+  If your images are .png, either rename them to .jpg or open src/state/ThemeContext.jsx and change each "image" path from .jpg to .png (e.g. space-desert.png).
+
+Step 6: Done
+  • Run:  npm run dev
+  • Open the site and click "Theme" in the header to pick a theme. The image you chose will be the full-screen background.
+
+FINAL FOLDER STRUCTURE
+----------------------
+client\
+  public\
+    themes\
+      space-desert.jpg
+      race-car.jpg
+      astro-kid.jpg
+      sci-fi-corridor.jpg
+      hero-astronaut.jpg
