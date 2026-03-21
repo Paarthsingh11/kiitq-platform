@@ -194,11 +194,7 @@ export default function MultiplayerBattlePage() {
           setAnswerLocked(false);
           return;
         }
-        const isCorrect = res.gained > 0;
-        setAnswerResult(isCorrect ? "correct" : "incorrect");
-        if (res.correctIndex !== undefined && res.correctIndex !== null) {
-          setCorrectIndex(res.correctIndex);
-        }
+        setAnswerResult("submitted");
         if (res.gained) {
           setScore((s) => s + res.gained);
         }
@@ -225,10 +221,7 @@ export default function MultiplayerBattlePage() {
       (res) => {
         setSubmitting(false);
         if (!res || res.error) return;
-        setAnswerResult("incorrect");
-        if (res.correctIndex !== undefined && res.correctIndex !== null) {
-          setCorrectIndex(res.correctIndex);
-        }
+        setAnswerResult("submitted");
         if (res.gained) {
           setScore((s) => s + res.gained);
         }
@@ -669,7 +662,7 @@ export default function MultiplayerBattlePage() {
               <div className="text-xs text-slate-300 font-medium drop-shadow-md">You</div>
               <div className="text-xs text-white font-semibold drop-shadow-md">{user?.name}</div>
               <div className="text-xs text-slate-300 font-medium mt-1 drop-shadow-md">Score</div>
-              <div className="text-lg font-bold text-white text-glow">{score} pts</div>
+              <div className="text-lg font-bold text-white text-glow">Hidden</div>
             </div>
           </div>
         </div>
@@ -735,8 +728,8 @@ export default function MultiplayerBattlePage() {
                 )}
               </div>
               {answerResult && (
-                <div className={`quiz-feedback-badge ${answerResult === "correct" ? "quiz-feedback-correct" : "quiz-feedback-incorrect"}`}>
-                  {answerResult === "correct" ? "✓ Correct!" : "✗ Wrong"}
+                <div className={`quiz-feedback-badge ${answerResult === "correct" ? "quiz-feedback-correct" : answerResult === "submitted" ? "bg-blue-500/20 text-blue-300 border-blue-500/50" : "quiz-feedback-incorrect"}`}>
+                  {answerResult === "correct" ? "✓ Correct!" : answerResult === "submitted" ? "Answer locked!" : "✗ Wrong"}
                 </div>
               )}
             </div>
@@ -800,7 +793,7 @@ export default function MultiplayerBattlePage() {
                     <span className="text-slate-100 font-semibold drop-shadow-sm">
                       {p.name} {isYou && <span className="text-[10px] text-emerald-300 ml-1">(you)</span>}
                     </span>
-                    <div className="text-[11px] text-slate-300 drop-shadow-sm font-medium">Score: {p.score} pts</div>
+                    <div className="text-[11px] text-slate-400 drop-shadow-sm font-medium italic">Score hidden</div>
                   </div>
                 </div>
                 {attackMode && p.name !== user?.name && (
@@ -830,10 +823,7 @@ export default function MultiplayerBattlePage() {
                   <span className="w-5 text-sm font-extrabold text-slate-300 drop-shadow-md">#{idx + 1}</span>
                   <span className="text-base font-semibold text-slate-100 drop-shadow-md">{p.name}</span>
                 </span>
-                <span className="text-base text-white font-bold text-glow" style={{textAlign: "right"}}>
-                  {p.score} <span className="text-xs font-medium text-slate-300">pts</span><br/>
-                  <span className="text-[10px] font-medium text-slate-300 opacity-80">({p.marksObtained}/{totalMarks} marks)</span>
-                </span>
+                <span className="text-xs font-medium text-slate-400 italic">Score hidden</span>
               </div>
             ))}
           </div>
