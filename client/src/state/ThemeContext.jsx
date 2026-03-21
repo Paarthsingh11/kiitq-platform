@@ -14,7 +14,7 @@ const THEMES = [
     id: "race-car",
     name: "Crimson Speed",
     description: "Red sports car, dynamic stripes",
-    image: "/themes/race-car.png",
+    image: "/themes/race-car.jpg",
     overlay: "dark",
     cardStyle: "glass-light",
     accent: "red"
