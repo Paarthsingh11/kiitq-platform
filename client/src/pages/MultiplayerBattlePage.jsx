@@ -324,9 +324,8 @@ export default function MultiplayerBattlePage() {
           </div>
         </div>
 
-        {/* Theme picker – Host only */}
-        {isHost && (
-          <div className="theme-picker-wrapper">
+        {/* Theme picker – available for all */}
+        <div className="theme-picker-wrapper">
           <button
             type="button"
             className="theme-picker-icon"
@@ -366,8 +365,7 @@ export default function MultiplayerBattlePage() {
               ))}
             </div>
           )}
-          </div>
-        )}
+        </div>
 
         {/* Main two-column area */}
         <div className="mp-lobby-columns">
