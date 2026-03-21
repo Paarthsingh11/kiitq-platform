@@ -20,24 +20,16 @@ export function AppLayout({ children }) {
     : {};
 
   return (
-    <>
-      {activeTheme && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            ...backgroundStyle,
-            zIndex: -1
-          }} 
-        />
-      )}
-      <div
-        className={activeTheme ? "min-h-screen flex flex-col bg-slate-950/0" : "min-h-screen flex flex-col bg-slate-950"}
-        style={!activeTheme ? { background: "radial-gradient(circle at top, #059669 0%, #020617 55%, #000 100%)" } : {}}
-      >
+    <div
+      className={activeTheme ? "min-h-screen flex flex-col text-slate-50 relative" : "min-h-screen flex flex-col bg-slate-950"}
+      style={
+        activeTheme
+          ? {
+              ...backgroundStyle,
+            }
+          : { background: "radial-gradient(circle at top, #059669 0%, #020617 55%, #000 100%)" }
+      }
+    >
       <header className="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2 group">
@@ -112,6 +104,5 @@ export function AppLayout({ children }) {
         </div>
       </main>
     </div>
-    </>
   );
 }
