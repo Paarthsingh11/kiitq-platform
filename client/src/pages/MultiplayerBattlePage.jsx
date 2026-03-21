@@ -68,10 +68,22 @@ export default function MultiplayerBattlePage() {
     s.on("disconnect", () => setConnected(false));
     s.on("lobby_update", (payload) => {
       setPlayers(payload.players || []);
-      if (payload.themeId) setThemeId(payload.themeId);
+      if (payload.themeId) {
+        if (user?.role === "student" && payload.themeId === "race-car") {
+          setThemeId("default");
+        } else {
+          setThemeId(payload.themeId);
+        }
+      }
     });
     s.on("theme_changed", (payload) => {
-      if (payload.themeId) setThemeId(payload.themeId);
+      if (payload.themeId) {
+        if (user?.role === "student" && payload.themeId === "race-car") {
+          setThemeId("default");
+        } else {
+          setThemeId(payload.themeId);
+        }
+      }
     });
     s.on("quiz_started", () => {
       setStatus("in_progress");
@@ -348,8 +360,10 @@ export default function MultiplayerBattlePage() {
                 <div className="theme-picker-thumb" style={{ background: "linear-gradient(135deg, #334155, #1e293b)" }} />
                 {themeId === "default" && <span className="theme-picker-check">✓</span>}
               </button>
-              {themes.map((t) => (
-                <button
+              {themes.map((t) => {
+                if (user?.role === "student" && t.id === "race-car") return null;
+                return (
+                  <button
                   key={t.id}
                   type="button"
                   className={`theme-picker-item ${themeId === t.id ? "theme-picker-active" : ""}`}
@@ -362,7 +376,8 @@ export default function MultiplayerBattlePage() {
                   <img src={t.image} alt={t.name} className="theme-picker-thumb" />
                   {themeId === t.id && <span className="theme-picker-check">✓</span>}
                 </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
