@@ -17,7 +17,8 @@ const THEMES = [
     image: "/themes/race-car.jpg",
     overlay: "dark",
     cardStyle: "glass-light",
-    accent: "red"
+    accent: "red",
+    bgPosition: "center bottom"
   },
   {
     id: "astro-kid",

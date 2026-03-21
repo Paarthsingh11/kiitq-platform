@@ -13,8 +13,9 @@ export function AppLayout({ children }) {
   const backgroundStyle = activeTheme
     ? {
         backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.0) 50%, rgba(15, 23, 42, 0.3) 100%), url(${activeTheme.image})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center"
+        backgroundSize: activeTheme.bgSize || "cover",
+        backgroundPosition: activeTheme.bgPosition || "center",
+        backgroundRepeat: "no-repeat"
       }
     : {};
 
