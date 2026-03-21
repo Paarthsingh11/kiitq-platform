@@ -144,6 +144,7 @@ async function getFinishedResults(quizId, ownerId) {
     .limit(1);
 
   const totalQuestions = quiz.questions?.length || 0;
+  const totalMarks = quiz.questions?.reduce((sum, q) => sum + (typeof q.marks === 'number' ? q.marks : 1), 0) || totalQuestions;
 
   const sessionData = sessions.map((session) => {
     const sorted = [...session.players].sort((a, b) => b.score - a.score);
@@ -160,11 +161,12 @@ async function getFinishedResults(quizId, ownerId) {
         cheatCount: p.cheatCount || 0,
         rank: i + 1,
         score: p.score,
+        marksObtained: p.marksObtained || 0
       })),
     };
   });
 
-  return { quiz, totalQuestions, sessions: sessionData };
+  return { quiz, totalQuestions, totalMarks, sessions: sessionData };
 }
 
 function formatDate(d) {
@@ -177,9 +179,9 @@ router.get("/:id/results/download", authRequired, requireRole("teacher"), async 
     const data = await getFinishedResults(req.params.id, req.user._id);
     if (!data) return res.status(404).json({ message: "Quiz not found" });
 
-    const { quiz, totalQuestions, sessions } = data;
+    const { quiz, totalQuestions, totalMarks, sessions } = data;
 
-    const rows = ["S.No,Student Name,Roll No,Section,Branch,Rank,Score,Cheated,Session Code,Session Date,Total Questions"];
+    const rows = ["S.No,Student Name,Roll No,Section,Branch,Rank,Score,Marks Obtained,Total Marks,Cheated,Session Code,Session Date,Total Questions"];
 
     for (const session of sessions) {
       const dateStr = formatDate(session.date);
@@ -188,12 +190,12 @@ router.get("/:id/results/download", authRequired, requireRole("teacher"), async 
         const safeRoll = `"${p.rollNumber.replace(/"/g, '""')}"`;
         const safeSec = `"${p.section.replace(/"/g, '""')}"`;
         const safeBranch = `"${p.branch.replace(/"/g, '""')}"`;
-        rows.push(`${p.sNo},${safeName},${safeRoll},${safeSec},${safeBranch},${p.rank},${p.score},${p.cheatCount},${session.joinCode},"${dateStr}",${totalQuestions}`);
+        rows.push(`${p.sNo},${safeName},${safeRoll},${safeSec},${safeBranch},${p.rank},${p.score},${p.marksObtained},${totalMarks},${p.cheatCount},${session.joinCode},"${dateStr}",${totalQuestions}`);
       });
     }
 
     if (rows.length === 1) {
-      rows.push(`1,"No students","-","-","-","-",0,0,"-","No sessions",${totalQuestions}`);
+      rows.push(`1,"No students","-","-","-","-",0,0,0,0,"-","No sessions",${totalQuestions}`);
     }
 
     const csv = rows.join("\n");
@@ -214,7 +216,7 @@ router.get("/:id/results/download-pdf", authRequired, requireRole("teacher"), as
     const data = await getFinishedResults(req.params.id, req.user._id);
     if (!data) return res.status(404).json({ message: "Quiz not found" });
 
-    const { quiz, totalQuestions, sessions } = data;
+    const { quiz, totalQuestions, totalMarks, sessions } = data;
     const filename = `${quiz.title.replace(/[^a-zA-Z0-9 ]/g, "_")}_results.pdf`;
 
     res.setHeader("Content-Type", "application/pdf");
@@ -236,7 +238,7 @@ router.get("/:id/results/download-pdf", authRequired, requireRole("teacher"), as
     doc.fillColor("#222").fontSize(12).font("Helvetica-Bold")
       .text(`Quiz: ${quiz.title}`, 55, infoTop + 10);
     doc.fontSize(10).font("Helvetica").fillColor("#444")
-      .text(`Total Questions: ${totalQuestions}  |  Total Sessions: ${sessions.length}  |  Teacher: ${req.user.name || "N/A"}`, 55, infoTop + 30);
+      .text(`Total Questions: ${totalQuestions}  |  Total Marks: ${totalMarks}  |  Total Sessions: ${sessions.length}  |  Teacher: ${req.user.name || "N/A"}`, 55, infoTop + 30);
     doc.y = infoTop + 65;
 
     if (sessions.length === 0) {
@@ -259,9 +261,9 @@ router.get("/:id/results/download-pdf", authRequired, requireRole("teacher"), as
       doc.moveDown(0.3);
 
       // ── Table Header ──
-      const colX = [40, 70, 160, 225, 275, 325, 365, 405, 445];
-      const colW = [30, 90, 65, 50, 50, 40, 40, 40, 95];
-      const headers = ["#", "Student", "Roll No", "Section", "Branch", "Rank", "Score", "Warns", "Date"];
+      const colX = [40, 65, 145, 195, 230, 275, 310, 350, 395, 435];
+      const colW = [25, 80, 50,  35,  45,  35,  40,  45,  40,  120];
+      const headers = ["#", "Student", "Roll", "Sec", "Branch", "Rank", "Score", "Marks", "Warns", "Date"];
 
       const headerY = doc.y;
       doc.rect(40, headerY, doc.page.width - 80, 20).fill("#2a4a8a");
@@ -292,12 +294,13 @@ router.get("/:id/results/download-pdf", authRequired, requireRole("teacher"), as
         doc.fillColor("#333").fontSize(9).font("Helvetica");
         const rowData = [
           String(p.sNo),
-          p.name,
-          p.rollNumber,
-          p.section,
-          p.branch,
+          p.name.substring(0, 15),
+          p.rollNumber.substring(0, 8),
+          p.section.substring(0, 5),
+          p.branch.substring(0, 7),
           `#${p.rank}`,
           String(p.score),
+          `${p.marksObtained}/${totalMarks}`,
           String(p.cheatCount),
           formatDate(session.date).split(",")[0] || formatDate(session.date)
         ];
