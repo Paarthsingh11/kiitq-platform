@@ -121,6 +121,46 @@ export function initMultiplayerSockets(io) {
             isHost: state.hostUserId === userId.toString(),
             quizTitle: session.quiz.title
           });
+
+        if (session.status === "in_progress" && !state.players[userId].finished) {
+          const p = state.players[userId];
+          const quiz = await Quiz.findById(state.quizId);
+          if (quiz) {
+            const realQuestionIndex = p.order[p.currentIndex];
+            const q = quiz.questions[realQuestionIndex];
+            if (q) {
+              io.to(p.socketId).emit("question", {
+                questionIndex: p.currentIndex,
+                totalQuestions: p.order.length,
+                text: q.text,
+                options: q.options,
+                timeLimitSeconds: q.timeLimitSeconds,
+                points: 800
+              });
+            }
+          }
+        }
+
+        if (session.status === "in_progress" || session.status === "finished") {
+          const leaderboard = Object.entries(state.players)
+            .map(([id, p]) => ({ 
+              id, 
+              name: p.name, 
+              score: p.score,
+              marksObtained: p.marksObtained,
+              correctAnswers: p.correctAnswers,
+              wrongAnswers: p.wrongAnswers,
+              skippedQuestions: p.skippedQuestions
+            }))
+            .sort((a, b) => b.score - a.score);
+
+          io.to(state.players[userId].socketId).emit("score_update", { leaderboard, totalMarks: state.totalMarks });
+
+          if (session.status === "finished") {
+            io.to(state.players[userId].socketId).emit("quiz_finished", { leaderboard, totalMarks: state.totalMarks });
+          }
+        }
+
       } catch (err) {
         console.error(err);
         callback && callback({ error: "Failed to join room" });
