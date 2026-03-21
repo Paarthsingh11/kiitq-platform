@@ -13,7 +13,7 @@ export default function QuizCreatePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState([
-    { text: "", options: ["", "", "", ""], correctIndex: -1, timeLimitSeconds: 30, points: 100 },
+    { text: "", options: ["", "", "", ""], correctIndex: -1, timeLimitSeconds: 30, points: 100, marks: 1 },
   ]);
   const [saving, setSaving] = useState(false);
 
@@ -46,7 +46,7 @@ export default function QuizCreatePage() {
   const addQuestion = () => {
     setQuestions((prev) => [
       ...prev,
-      { text: "", options: ["", "", "", ""], correctIndex: -1, timeLimitSeconds: 30, points: 100 },
+      { text: "", options: ["", "", "", ""], correctIndex: -1, timeLimitSeconds: 30, points: 100, marks: 1 },
     ]);
   };
 
@@ -77,6 +77,7 @@ export default function QuizCreatePage() {
           correctIndex: Number(q.correctIndex),
           timeLimitSeconds: Number(q.timeLimitSeconds) || 30,
           points: Number(q.points) || 100,
+          marks: Number(q.marks) || 1,
         })),
       };
       await api.post("/quizzes", payload);
@@ -307,6 +308,18 @@ export default function QuizCreatePage() {
                           onChange={(e) => handleQuestionChange(idx, "points", e.target.value)}
                         />
                         <span>pts</span>
+                      </label>
+                      <label className="qc-meta-label">
+                        💯
+                        <input
+                          type="number"
+                          min={0}
+                          max={10}
+                          className="qc-meta-input"
+                          value={q.marks ?? 1}
+                          onChange={(e) => handleQuestionChange(idx, "marks", e.target.value)}
+                        />
+                        <span>marks</span>
                       </label>
                     </div>
                   </div>

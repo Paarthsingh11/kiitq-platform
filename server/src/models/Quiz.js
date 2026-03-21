@@ -6,7 +6,8 @@ const questionSchema = new mongoose.Schema(
     options: [{ type: String, required: true }],
     correctIndex: { type: Number, required: true },
     timeLimitSeconds: { type: Number, default: 30 },
-    points: { type: Number, default: 100 }
+    points: { type: Number, default: 100 },
+    marks: { type: Number, default: 1, min: 0, max: 10 }
   },
   { _id: false }
 );

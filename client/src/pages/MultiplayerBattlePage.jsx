@@ -25,6 +25,7 @@ export default function MultiplayerBattlePage() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [score, setScore] = useState(0);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [totalMarks, setTotalMarks] = useState(0);
   const [status, setStatus] = useState("lobby");
   const [submitting, setSubmitting] = useState(false);
   const [powerReady, setPowerReady] = useState(false);
@@ -88,6 +89,7 @@ export default function MultiplayerBattlePage() {
     });
     s.on("score_update", (payload) => {
       setLeaderboard(payload.leaderboard || []);
+      if (payload.totalMarks !== undefined) setTotalMarks(payload.totalMarks);
     });
     s.on("power_unlocked", () => {
       setPowerReady(true);
@@ -113,6 +115,7 @@ export default function MultiplayerBattlePage() {
     s.on("quiz_finished", (payload) => {
       setStatus("finished");
       setLeaderboard(payload.leaderboard || []);
+      if (payload.totalMarks !== undefined) setTotalMarks(payload.totalMarks);
     });
 
     setSocket(s);
@@ -527,7 +530,10 @@ export default function MultiplayerBattlePage() {
                   <span className="lb-podium-rank">2</span>
                 </div>
                 <span className="lb-podium-name">{leaderboard[1].name}</span>
-                <span className="lb-podium-score">{leaderboard[1].score} pts</span>
+                <span className="lb-podium-score">
+                  {leaderboard[1].score} pts<br/>
+                  <span className="text-xs opacity-80 font-normal">({leaderboard[1].marksObtained}/{totalMarks} marks)</span>
+                </span>
                 <div className="lb-podium-bar lb-podium-bar-2" />
               </div>
             )}
@@ -539,7 +545,10 @@ export default function MultiplayerBattlePage() {
                   <span className="lb-podium-rank">1</span>
                 </div>
                 <span className="lb-podium-name lb-podium-name-gold">{leaderboard[0].name}</span>
-                <span className="lb-podium-score lb-podium-score-gold">{leaderboard[0].score} pts</span>
+                <span className="lb-podium-score lb-podium-score-gold">
+                  {leaderboard[0].score} pts<br/>
+                  <span className="text-xs opacity-80 font-normal">({leaderboard[0].marksObtained}/{totalMarks} marks)</span>
+                </span>
                 <div className="lb-podium-bar lb-podium-bar-1" />
               </div>
             )}
@@ -550,7 +559,10 @@ export default function MultiplayerBattlePage() {
                   <span className="lb-podium-rank">3</span>
                 </div>
                 <span className="lb-podium-name">{leaderboard[2].name}</span>
-                <span className="lb-podium-score">{leaderboard[2].score} pts</span>
+                <span className="lb-podium-score">
+                  {leaderboard[2].score} pts<br/>
+                  <span className="text-xs opacity-80 font-normal">({leaderboard[2].marksObtained}/{totalMarks} marks)</span>
+                </span>
                 <div className="lb-podium-bar lb-podium-bar-3" />
               </div>
             )}
@@ -562,7 +574,29 @@ export default function MultiplayerBattlePage() {
           <div className="lb-my-score">
             <span className="lb-my-rank">#{myRank + 1}</span>
             <span className="lb-my-label">Your Score</span>
-            <span className="lb-my-points">{leaderboard[myRank]?.score || score} pts</span>
+            <span className="lb-my-points">
+              {leaderboard[myRank]?.score || score} pts <span className="text-sm font-normal opacity-80">({leaderboard[myRank]?.marksObtained || 0}/{totalMarks} marks)</span>
+            </span>
+          </div>
+        )}
+
+        {/* Student specific stats */}
+        {myRank >= 0 && (
+          <div className="flex items-center justify-center gap-6 mt-4 mb-6 bg-slate-900/50 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-lg mx-auto max-w-sm">
+            <div className="flex flex-col items-center">
+              <span className="text-2xl mb-1" title="Correct">✅</span>
+              <span className="text-xs text-slate-200 font-bold">{leaderboard[myRank]?.correctAnswers || 0} Correct</span>
+            </div>
+            <div className="w-px h-10 bg-white/10"></div>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl mb-1" title="Wrong">❌</span>
+              <span className="text-xs text-slate-200 font-bold">{leaderboard[myRank]?.wrongAnswers || 0} Wrong</span>
+            </div>
+            <div className="w-px h-10 bg-white/10"></div>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl mb-1" title="Skipped">⏭️</span>
+              <span className="text-xs text-slate-200 font-bold">{leaderboard[myRank]?.skippedQuestions || 0} Skipped</span>
+            </div>
           </div>
         )}
 
@@ -581,7 +615,10 @@ export default function MultiplayerBattlePage() {
                     {isYou && <span className="lb-row-you-tag">you</span>}
                   </span>
                 </div>
-                <span className="lb-row-score">{p.score} pts</span>
+                <span className="lb-row-score" style={{textAlign:"right"}}>
+                  {p.score} pts<br/>
+                  <span className="text-[10px] font-normal opacity-80">({p.marksObtained}/{totalMarks} marks)</span>
+                </span>
               </div>
             );
           })}
@@ -793,7 +830,10 @@ export default function MultiplayerBattlePage() {
                   <span className="w-5 text-sm font-extrabold text-slate-300 drop-shadow-md">#{idx + 1}</span>
                   <span className="text-base font-semibold text-slate-100 drop-shadow-md">{p.name}</span>
                 </span>
-                <span className="text-base text-white font-bold text-glow">{p.score} <span className="text-xs font-medium text-slate-300">pts</span></span>
+                <span className="text-base text-white font-bold text-glow" style={{textAlign: "right"}}>
+                  {p.score} <span className="text-xs font-medium text-slate-300">pts</span><br/>
+                  <span className="text-[10px] font-medium text-slate-300 opacity-80">({p.marksObtained}/{totalMarks} marks)</span>
+                </span>
               </div>
             ))}
           </div>

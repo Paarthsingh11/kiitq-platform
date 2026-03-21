@@ -44,7 +44,11 @@ export function initMultiplayerSockets(io) {
             section: payload.section || "",
             branch: payload.branch || "",
             score: 0,
-            cheatCount: 0
+            cheatCount: 0,
+            marksObtained: 0,
+            correctAnswers: 0,
+            wrongAnswers: 0,
+            skippedQuestions: 0
           };
           session.players.push(dbPlayer);
           await session.save();
@@ -58,10 +62,12 @@ export function initMultiplayerSockets(io) {
 
         // Initialize room state if missing
         if (!roomState[joinCode]) {
+          const totalMarks = session.quiz.questions.reduce((sum, q) => sum + (typeof q.marks === 'number' ? q.marks : 1), 0);
           roomState[joinCode] = {
             sessionId: session._id.toString(),
             quizId: session.quiz._id.toString(),
             hostUserId: session.host.toString(),
+            totalMarks,
             players: {}
           };
         }
@@ -78,6 +84,10 @@ export function initMultiplayerSockets(io) {
             socketId: socket.id,
             name,
             score: 0,
+            marksObtained: 0,
+            correctAnswers: 0,
+            wrongAnswers: 0,
+            skippedQuestions: 0,
             order: questionIndices,
             currentIndex: 0,
             finished: false,
@@ -97,7 +107,11 @@ export function initMultiplayerSockets(io) {
           players: Object.entries(state.players).map(([id, p]) => ({
             id,
             name: p.name,
-            score: p.score
+            score: p.score,
+            marksObtained: p.marksObtained,
+            correctAnswers: p.correctAnswers,
+            wrongAnswers: p.wrongAnswers,
+            skippedQuestions: p.skippedQuestions
           }))
         });
 
@@ -193,8 +207,11 @@ export function initMultiplayerSockets(io) {
         let gained = 0;
         const basePoints = 800;
         const isCorrect = q && selectedIndex === q.correctIndex;
+        const questionMarks = typeof q.marks === 'number' ? q.marks : 1;
 
         if (isCorrect) {
+          player.correctAnswers += 1;
+          player.marksObtained += questionMarks;
           player.correctStreak += 1;
           gained = basePoints;
           if (player.doubleNext) {
@@ -208,6 +225,11 @@ export function initMultiplayerSockets(io) {
           }
         } else {
           player.correctStreak = 0;
+          if (selectedIndex === -1) {
+            player.skippedQuestions += 1;
+          } else {
+            player.wrongAnswers += 1;
+          }
         }
 
         // Update DB session score snapshot
@@ -218,16 +240,28 @@ export function initMultiplayerSockets(io) {
           );
           if (dbPlayer) {
             dbPlayer.score = player.score;
+            dbPlayer.marksObtained = player.marksObtained;
+            dbPlayer.correctAnswers = player.correctAnswers;
+            dbPlayer.wrongAnswers = player.wrongAnswers;
+            dbPlayer.skippedQuestions = player.skippedQuestions;
             await session.save();
           }
         }
 
         // Broadcast score update
         const leaderboard = Object.entries(state.players)
-          .map(([id, p]) => ({ id, name: p.name, score: p.score }))
+          .map(([id, p]) => ({ 
+            id, 
+            name: p.name, 
+            score: p.score,
+            marksObtained: p.marksObtained,
+            correctAnswers: p.correctAnswers,
+            wrongAnswers: p.wrongAnswers,
+            skippedQuestions: p.skippedQuestions
+          }))
           .sort((a, b) => b.score - a.score);
 
-        io.to(joinCode).emit("score_update", { leaderboard });
+        io.to(joinCode).emit("score_update", { leaderboard, totalMarks: state.totalMarks });
 
         player.currentIndex += 1;
 
@@ -238,7 +272,7 @@ export function initMultiplayerSockets(io) {
           if (allFinished) {
             await finalizeSession(joinCode);
             setTimeout(() => {
-              io.to(joinCode).emit("quiz_finished", { leaderboard });
+              io.to(joinCode).emit("quiz_finished", { leaderboard, totalMarks: state.totalMarks });
             }, 2500);
           }
           callback && callback({ correct: gained > 0, gained, finished: true, correctIndex: q.correctIndex });
@@ -355,10 +389,18 @@ export function initMultiplayerSockets(io) {
           }
 
           const leaderboard = Object.entries(state.players)
-            .map(([id, p]) => ({ id, name: p.name, score: p.score }))
+            .map(([id, p]) => ({ 
+              id, 
+              name: p.name, 
+              score: p.score,
+              marksObtained: p.marksObtained,
+              correctAnswers: p.correctAnswers,
+              wrongAnswers: p.wrongAnswers,
+              skippedQuestions: p.skippedQuestions
+            }))
             .sort((a, b) => b.score - a.score);
 
-          io.to(joinCode).emit("score_update", { leaderboard });
+          io.to(joinCode).emit("score_update", { leaderboard, totalMarks: state.totalMarks });
           io.to(joinCode).emit("power_event", {
             type: "attack",
             from: player.name,
@@ -420,10 +462,18 @@ export function initMultiplayerSockets(io) {
           if (allFinished) {
             await finalizeSession(joinCode);
             const leaderboard = Object.entries(state.players)
-              .map(([id, p]) => ({ id, name: p.name, score: p.score }))
+              .map(([id, p]) => ({ 
+                id, 
+                name: p.name, 
+                score: p.score,
+                marksObtained: p.marksObtained,
+                correctAnswers: p.correctAnswers,
+                wrongAnswers: p.wrongAnswers,
+                skippedQuestions: p.skippedQuestions
+              }))
               .sort((a, b) => b.score - a.score);
             setTimeout(() => {
-              io.to(joinCode).emit("quiz_finished", { leaderboard });
+              io.to(joinCode).emit("quiz_finished", { leaderboard, totalMarks: state.totalMarks });
             }, 2500);
           }
           callback && callback({ success: true, action: "kicked" });
@@ -478,11 +528,19 @@ export function initMultiplayerSockets(io) {
         });
 
         const leaderboard = Object.entries(state.players)
-          .map(([id, p]) => ({ id, name: p.name, score: p.score }))
+          .map(([id, p]) => ({ 
+            id, 
+            name: p.name, 
+            score: p.score,
+            marksObtained: p.marksObtained,
+            correctAnswers: p.correctAnswers,
+            wrongAnswers: p.wrongAnswers,
+            skippedQuestions: p.skippedQuestions
+          }))
           .sort((a, b) => b.score - a.score);
 
         await finalizeSession(joinCode);
-        io.to(joinCode).emit("quiz_finished", { leaderboard });
+        io.to(joinCode).emit("quiz_finished", { leaderboard, totalMarks: state.totalMarks });
 
         callback && callback({ success: true });
       } catch (err) {

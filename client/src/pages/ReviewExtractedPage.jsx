@@ -56,7 +56,7 @@ export default function ReviewExtractedPage() {
   const addQuestion = () => {
     setQuestions((prev) => [
       ...prev,
-      { text: "", options: ["", "", "", ""], correctIndex: -1, timeLimitSeconds: 30, points: 100 },
+      { text: "", options: ["", "", "", ""], correctIndex: -1, timeLimitSeconds: 30, points: 100, marks: 1 },
     ]);
   };
 
@@ -87,6 +87,7 @@ export default function ReviewExtractedPage() {
           correctIndex: Number(q.correctIndex),
           timeLimitSeconds: Number(q.timeLimitSeconds) || 30,
           points: Number(q.points) || 100,
+          marks: Number(q.marks) || 1,
         })),
       };
       await api.post("/quizzes", payload);
@@ -235,6 +236,18 @@ export default function ReviewExtractedPage() {
                     onChange={(e) => handleQuestionChange(idx, "points", e.target.value)}
                   />
                   <span>pts</span>
+                </label>
+                <label className="qc-meta-label">
+                  💯
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    className="qc-meta-input"
+                    value={q.marks ?? 1}
+                    onChange={(e) => handleQuestionChange(idx, "marks", e.target.value)}
+                  />
+                  <span>marks</span>
                 </label>
               </div>
             </div>

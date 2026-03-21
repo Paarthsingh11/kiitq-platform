@@ -8,7 +8,11 @@ const playerSchema = new mongoose.Schema(
     section: { type: String, default: "" },
     branch: { type: String, default: "" },
     score: { type: Number, default: 0 },
-    cheatCount: { type: Number, default: 0 }
+    cheatCount: { type: Number, default: 0 },
+    marksObtained: { type: Number, default: 0 },
+    correctAnswers: { type: Number, default: 0 },
+    wrongAnswers: { type: Number, default: 0 },
+    skippedQuestions: { type: Number, default: 0 }
   },
   { _id: false }
 );
