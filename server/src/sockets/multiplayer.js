@@ -68,6 +68,7 @@ export function initMultiplayerSockets(io) {
             quizId: session.quiz._id.toString(),
             hostUserId: session.host.toString(),
             totalMarks,
+            themeId: "default",
             players: {}
           };
         }
@@ -104,6 +105,7 @@ export function initMultiplayerSockets(io) {
         socket.join(joinCode);
 
         io.to(joinCode).emit("lobby_update", {
+          themeId: state.themeId || "default",
           players: Object.entries(state.players).map(([id, p]) => ({
             id,
             name: p.name,
@@ -212,6 +214,27 @@ export function initMultiplayerSockets(io) {
       } catch (err) {
         console.error(err);
         callback && callback({ error: "Failed to start quiz" });
+      }
+    });
+
+    socket.on("change_theme", async ({ joinCode, themeId }, callback) => {
+      try {
+        const token = getTokenFromHandshake(socket);
+        if (!token) return callback && callback({ error: "Unauthorized" });
+        const payload = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
+        const userId = payload.id;
+
+        const state = roomState[joinCode];
+        if (!state || state.hostUserId !== userId.toString()) {
+          return callback && callback({ error: "Only host can change theme" });
+        }
+        
+        state.themeId = themeId;
+        io.to(joinCode).emit("theme_changed", { themeId });
+        callback && callback({ success: true });
+      } catch (err) {
+        console.error(err);
+        callback && callback({ error: "Failed to change theme" });
       }
     });
 

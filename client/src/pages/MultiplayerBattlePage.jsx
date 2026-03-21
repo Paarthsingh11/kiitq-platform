@@ -68,6 +68,10 @@ export default function MultiplayerBattlePage() {
     s.on("disconnect", () => setConnected(false));
     s.on("lobby_update", (payload) => {
       setPlayers(payload.players || []);
+      if (payload.themeId) setThemeId(payload.themeId);
+    });
+    s.on("theme_changed", (payload) => {
+      if (payload.themeId) setThemeId(payload.themeId);
     });
     s.on("quiz_started", () => {
       setStatus("in_progress");
@@ -320,8 +324,9 @@ export default function MultiplayerBattlePage() {
           </div>
         </div>
 
-        {/* Theme picker – right aligned between topbar and content */}
-        <div className="theme-picker-wrapper">
+        {/* Theme picker – Host only */}
+        {isHost && (
+          <div className="theme-picker-wrapper">
           <button
             type="button"
             className="theme-picker-icon"
@@ -335,7 +340,11 @@ export default function MultiplayerBattlePage() {
               <button
                 type="button"
                 className={`theme-picker-item ${themeId === "default" ? "theme-picker-active" : ""}`}
-                onClick={() => { setThemeId("default"); setShowThemePicker(false); }}
+                onClick={() => { 
+                  setThemeId("default"); 
+                  setShowThemePicker(false); 
+                  if (socket) socket.emit("change_theme", { joinCode, themeId: "default" });
+                }}
               >
                 <div className="theme-picker-thumb" style={{ background: "linear-gradient(135deg, #334155, #1e293b)" }} />
                 {themeId === "default" && <span className="theme-picker-check">✓</span>}
@@ -345,7 +354,11 @@ export default function MultiplayerBattlePage() {
                   key={t.id}
                   type="button"
                   className={`theme-picker-item ${themeId === t.id ? "theme-picker-active" : ""}`}
-                  onClick={() => { setThemeId(t.id); setShowThemePicker(false); }}
+                  onClick={() => { 
+                    setThemeId(t.id); 
+                    setShowThemePicker(false); 
+                    if (socket) socket.emit("change_theme", { joinCode, themeId: t.id });
+                  }}
                 >
                   <img src={t.image} alt={t.name} className="theme-picker-thumb" />
                   {themeId === t.id && <span className="theme-picker-check">✓</span>}
@@ -353,7 +366,8 @@ export default function MultiplayerBattlePage() {
               ))}
             </div>
           )}
-        </div>
+          </div>
+        )}
 
         {/* Main two-column area */}
         <div className="mp-lobby-columns">
