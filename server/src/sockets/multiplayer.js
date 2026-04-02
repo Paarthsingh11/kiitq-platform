@@ -295,21 +295,7 @@ export function initMultiplayerSockets(io) {
           }
         }
 
-        // Update DB session score snapshot
-        const session = await MultiplayerSession.findOne({ joinCode });
-        if (session) {
-          const dbPlayer = session.players.find(
-            (p) => p.userId && p.userId.toString() === userId.toString()
-          );
-          if (dbPlayer) {
-            dbPlayer.score = player.score;
-            dbPlayer.marksObtained = player.marksObtained;
-            dbPlayer.correctAnswers = player.correctAnswers;
-            dbPlayer.wrongAnswers = player.wrongAnswers;
-            dbPlayer.skippedQuestions = player.skippedQuestions;
-            await session.save();
-          }
-        }
+        // Inline DB save removed to improve performance. Final stats saved in finalizeSession.
 
         // Broadcast score update
         const leaderboard = Object.entries(state.players)
@@ -440,16 +426,7 @@ export function initMultiplayerSockets(io) {
           target.score -= 500;
           if (target.score < 0) target.score = 0;
 
-          const session = await MultiplayerSession.findOne({ joinCode });
-          if (session) {
-            const dbTarget = session.players.find(
-              (p) => p.userId && p.userId.toString() === targetPlayerId.toString()
-            );
-            if (dbTarget) {
-              dbTarget.score = target.score;
-              await session.save();
-            }
-          }
+          // Inline DB update removed for performance. Final stats are saved in finalizeSession.
 
           const leaderboard = Object.entries(state.players)
             .map(([id, p]) => ({ 
@@ -497,19 +474,7 @@ export function initMultiplayerSockets(io) {
         if (!player.cheatCount) player.cheatCount = 0;
         player.cheatCount += 1;
 
-        // Save cheat count to DB instantly
-        try {
-          const session = await MultiplayerSession.findOne({ joinCode });
-          if (session) {
-            const dbPlayer = session.players.find(p => p.userId && p.userId.toString() === userId.toString());
-            if (dbPlayer) {
-              dbPlayer.cheatCount = player.cheatCount;
-              await session.save();
-            }
-          }
-        } catch (dbErr) {
-          console.error("Failed to update cheat score in DB", dbErr);
-        }
+        // Cheat count tracked in memory, saved at the end
 
         const hostPlayer = state.players[state.hostUserId];
         if (hostPlayer) {
@@ -621,8 +586,24 @@ export function initMultiplayerSockets(io) {
 async function finalizeSession(joinCode) {
   try {
     const session = await MultiplayerSession.findOne({ joinCode });
+    const state = roomState[joinCode];
     if (session) {
       session.status = "finished";
+      if (state) {
+        Object.entries(state.players).forEach(([userId, p]) => {
+          const dbPlayer = session.players.find(
+            (dp) => dp.userId && dp.userId.toString() === userId.toString()
+          );
+          if (dbPlayer) {
+            dbPlayer.score = p.score;
+            dbPlayer.marksObtained = p.marksObtained;
+            dbPlayer.correctAnswers = p.correctAnswers;
+            dbPlayer.wrongAnswers = p.wrongAnswers;
+            dbPlayer.skippedQuestions = p.skippedQuestions;
+            dbPlayer.cheatCount = p.cheatCount !== undefined ? p.cheatCount : (dbPlayer.cheatCount || 0);
+          }
+        });
+      }
       await session.save();
     }
   } catch (err) {

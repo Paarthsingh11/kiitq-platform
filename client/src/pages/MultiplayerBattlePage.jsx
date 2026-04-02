@@ -62,7 +62,7 @@ export default function MultiplayerBattlePage() {
           return;
         }
         setIsHost(res.isHost);
-        if (!quizTitle && res.quizTitle) setQuizTitle(res.quizTitle);
+        if (res.quizTitle) setQuizTitle(res.quizTitle);
       });
     });
     s.on("disconnect", () => setConnected(false));
@@ -138,7 +138,8 @@ export default function MultiplayerBattlePage() {
     return () => {
       s.disconnect();
     };
-  }, [joinCode, navigate, quizTitle, score, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joinCode, navigate, token]);
 
   useEffect(() => {
     if (!question || status !== "in_progress") return;

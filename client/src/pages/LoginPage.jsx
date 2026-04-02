@@ -46,7 +46,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const result = await import("firebase/auth").then(m => m.signInWithPopup(auth, provider));
+      const result = await signInWithPopup(auth, provider);
       if (result) {
         const idToken = await result.user.getIdToken();
         try {
